@@ -1,180 +1,203 @@
+// Author - Ayslenon
+// made in 2018 in arduino ide for arduino mega
+
+//==============================================================================================
+// libs includes
+//==============================================================================================
 #include <LiquidCrystal.h>
 #include <Keypad.h>
 
-//declaração de E/S
 
-LiquidCrystal lcd(52, 50, 48, 46, 44, 42); //rs, e, d4, d5, d6, d7
 
-//pinos de I/O
+//==============================================================================================
+// i/o declarations
+//==============================================================================================
+
+LiquidCrystal lcd(52, 50, 48, 46, 44, 42); //rs, e, d4, d5, d6, d7 pins
+
+// i/o arduino pins
+
 const int led1 = 2;
 const int led2 = 3;
 const int led3 = 4;
 
-const int ledProcesso = 5;
+const int ledProcess = 5;
 
-const int agitador = 7;
-const int agitador2 = 6;
+const int stirrer = 7;
+const int stirrer2 = 6;
 
-//declaração de variaveis
-//tempo
-unsigned long tempo_at; //tempo atual
-unsigned long tempo_ant; //tempo anterior
 
-//pot de controle de velocidade
+//==============================================================================================
+// variables declarations 
+//==============================================================================================
+
+// time variables 
+unsigned long tempo_at; // actual time 
+unsigned long tempo_ant; // last time
+
+// velocity control potentiometer variables
+
 int potag1 = A1;
 int potag2 = A2;
 int softstart;
 
-//auxilio na escrita de tempo
-int posicaoVetor;
-int ultPosEscrita;
+// time writing assistance
+int vector_position;
+int lastWritenPosition;
 
-//variáveis de tempo dos processos
-int horas;  // horas do primeiro
-int horas2; // horas do segundo
-int horasp; // horas que o programa conta do primeiro
-int horasp2;// horas que o programa conta do segundo
+// time variables in processes
+int hours;  // first process hours
+int hours2; // second process hours
+int hoursp; // program hours of the first process
+int hoursp2;// program hours of the second process
 
-int minutos;  // minutos do primeiro
-int minutos2; // minutos do segundo
-int minutosp; // munutos que o programa conta do primeiro
-int minutosp2;// minutos que o programa conta do segundo
+int minutes;  // first process minutes
+int minutes2; // second process minutes
+int minutesp; // program minutes of the first process
+int minutesp2;// program minutes of the second process
 
-int segundos;  // segundos do primeiro
-int segundos2; // segundos do segundo
-int segundosp; // segundos que o programa conta do primeiro
-int segundosp2;// segundos que o programa conta do segundo
+int seconds;  // first process seconds
+int seconds2; // second process seconds 
+int secondsp; // program seconds of the first process
+int secondsp2;// program seconds of the second process
 
-//variaveis lógicas de controle de processo
-boolean digitei;
-boolean agitou1;
-boolean agitou2;
-boolean processo;
+// logic variables of processes control
+boolean started; // indicates system started
+boolean stirred1;// indicates process one finished or was forced to stop 
+boolean stirred2;// indicates process two finished or was forced to stop
+boolean process_started; // indicate one process started
 
-//vetores que guardam os dados de tempo de processo
+// vectors that stores time process data
 
-int vetorTempo[] = {0, 0, 0, 0, 0, 0}; //vetor auxiliar no recebimento de dados
-int vetorTempo2[] = {0, 0, 0, 0, 0, 0}; //vetor auxiliar no recebimento de dados
+int time_vector[] = {0, 0, 0, 0, 0, 0}; //auxiliar vector of incoming data
+int time_vector2[] = {0, 0, 0, 0, 0, 0}; //auxiliar vector of incoming data
 
-char aux; //variavel auxiliar no recebimento de dados;
+char aux; //auxiliar variable of incoming data
 
-//configuração teclado matricial
-char matrizteclado[4][4] = { //matrix linhas x colunas
+// layout matrix keyboard
+char keyboardMatrix[4][4] = { //matrix rows x columns
   {'1', '2', '3', 'c'},
   {'4', '5', '6', 'e'},
   {'7', '8', '9', 'a'},
   {'l', '0', 'e', 'd'}
 };
 
-byte linhas[4] = {22, 24, 26, 28}; //ligação das linhas do teclado com o arduino
-byte colunas[4] = {30, 32, 34, 36}; //ligação das colunas do teclado com o arduino
+//rows and columns wiring to arduino 
 
-Keypad numeros = Keypad( makeKeymap(matrizteclado), linhas, colunas, 4, 4); //função que cria um teclado virtual, baseado no teclado fisico e algumas variaveis
+byte rows[4] = {22, 24, 26, 28};
+byte columns[4] = {30, 32, 34, 36}; 
 
-//declaração de funções
-//função de acender os leds indicadores de nivel
+Keypad numbersKeypad = Keypad( makeKeymap(keyboardMatrix), rows, columns, 4, 4);
 
-int mostraTempo() { //função para mostrar o tempo no lcd
+//==============================================================================================
+// functions declarations
+//==============================================================================================
 
-  if (horas > 99) {
+
+int showTime() { //function to show the time1 on lcd
+
+  if (hours > 99) {
     lcd.setCursor(3, 1);
   }
   else {
     lcd.setCursor(4, 1);
   }
-  if (horas < 10) {
+  if (hours < 10) {
     lcd.print("0");
   }
-  lcd.print(horas);
+  lcd.print(hours);
   lcd.print("h");
-  if (minutos < 10) {
+  if (minutes < 10) {
     lcd.print("0");
   }
-  lcd.print(minutos);
+  lcd.print(minutes);
   lcd.print("m");
-  if (segundos < 10) {
+  if (seconds < 10) {
     lcd.print("0");
   }
-  lcd.print(segundos);
+  lcd.print(seconds);
   lcd.print("s");
 }
 
-int mostraTempo2() { //função para mostrar o tempo no lcd
-  if (horas2 > 99) {
+int showTime2() { //function to show the time2 on lcd
+  if (hours2 > 99) {
     lcd.setCursor(3, 1);
   }
   else {
     lcd.setCursor(4, 1);
   }
-  if (horas2 < 10) {
+  if (hours2 < 10) {
     lcd.print("0");
   }
-  lcd.print(horas2);
+  lcd.print(hours2);
   lcd.print("h");
-  if (minutos2 < 10) {
+  if (minutes2 < 10) {
     lcd.print("0");
   }
-  lcd.print(minutos2);
+  lcd.print(minutes2);
   lcd.print("m");
-  if (segundos2 < 10) {
+  if (seconds2 < 10) {
     lcd.print("0");
   }
-  lcd.print(segundos2);
+  lcd.print(seconds2);
   lcd.print("s");
 }
 
-int configuraTempo() {
-  horas = vetorTempo[0] * 10 + vetorTempo[1];
-  minutos = vetorTempo[2] * 10 + vetorTempo[3];
-  segundos = vetorTempo[4] * 10 + vetorTempo[5];
+// function to configure the time that the user entered for time 1
+int setTime() {
+  hours = time_vector[0] * 10 + time_vector[1];
+  minutes = time_vector[2] * 10 + time_vector[3];
+  seconds = time_vector[4] * 10 + time_vector[5];
 
-  if (segundos > 59) {
-    segundos = segundos - 60;
-    minutos = minutos + 1;
+  if (seconds > 59) {
+    seconds = seconds - 60;
+    minutes = minutes + 1;
   }
 
-  if (minutos > 59) {
-    minutos = minutos - 60;
-    horas = horas + 1;
+  if (minutes > 59) {
+    minutes = minutes - 60;
+    hours = hours + 1;
   }
   lcd.clear();
 
 }
 
-int configuraTempo2() {
-  horas2 = vetorTempo2[0] * 10 + vetorTempo2[1];
-  minutos2 = vetorTempo2[2] * 10 + vetorTempo2[3];
-  segundos2 = vetorTempo2[4] * 10 + vetorTempo2[5];
+// function to configure the time that the user entered for time 2
+int setTime2() {
+  hours2 = time_vector2[0] * 10 + time_vector2[1];
+  minutes2 = time_vector2[2] * 10 + time_vector2[3];
+  seconds2 = time_vector2[4] * 10 + time_vector2[5];
 
-  if (segundos2 > 59) {
-    segundos2 = segundos2 - 60;
-    minutos2 = minutos2 + 1;
+  if (seconds2 > 59) {
+    seconds2 = seconds2 - 60;
+    minutes2 = minutes2 + 1;
   }
 
-  if (minutos2 > 59) {
-    minutos2 = minutos2 - 60;
-    horas2 = horas2 + 1;
+  if (minutes2 > 59) {
+    minutes2 = minutes2 - 60;
+    hours2 = hours2 + 1;
   }
   lcd.clear();
 }
 
 
 void setup() {
-  //declaração de entradas
+  // inputs declaration
   pinMode (potag1, INPUT);
   pinMode (potag2, INPUT);
 
-  //declaração de saidas
+  // outputs declaration
   pinMode (led1, OUTPUT);
   pinMode (led2, OUTPUT);
   pinMode (led3, OUTPUT);
-  pinMode (ledProcesso, OUTPUT);
-  pinMode (agitador, OUTPUT);
-  pinMode (agitador2, OUTPUT);
+  pinMode (ledProcess, OUTPUT);
+  pinMode (stirrer, OUTPUT);
+  pinMode (stirrer2, OUTPUT);
 
-  //inicialização do display
-  lcd.begin(16, 2); //inicia o lcd no tamanho 16x2
-  lcd.clear(); //limpa a tela do lcd
+
+  // display initialization
+  lcd.begin(16, 2); 
+  lcd.clear();
   lcd.print("Iniciando");
   delay(100);
   lcd.print(".");
@@ -190,211 +213,234 @@ void setup() {
   lcd.print(".");
   delay(100);
   lcd.print(".");
-  Serial.begin(9600); //inicia comunicação serial do arduino
+  Serial.begin(9600); // starts serial communication on arduino
 }
 
 void loop() {
-  digitei = false;
+  started = false;
   digitalWrite(led1, HIGH);
-  while (digitei == false) {
+  // we start with both stirrers turned off
+  while (started == false) {
 
     delay(1000);
 
     lcd.setCursor(0, 1);
     lcd.print("Aperte * p ligar");
     delay(500);
-    aux = numeros.waitForKey();
+    // wait until user press '*' button on physical keyboard, and is 'l' for the code
+    aux = numbersKeypad.waitForKey();
 
-    agitou1 = false;
-    agitou2 = false;
-
+    stirred1 = false;
+    stirred2 = false;
+    // if '*' is pressed...
     if (aux == 'l') {
       digitalWrite(led1, LOW);
-      digitalWrite(ledProcesso, LOW);
+      digitalWrite(ledProcess, LOW);
       digitalWrite(led2, HIGH);
-      for (posicaoVetor = 0; posicaoVetor < 6; posicaoVetor++) { // atribui 0 para os valores de todas as posições do vetor
-        vetorTempo[posicaoVetor] = 0;
+      // set 0 for all values on the auxiliar vectors
+      for (vector_position = 0; vector_position < 6; vector_position++) { 
+        time_vector[vector_position] = 0;
       }
 
-      for (posicaoVetor = 0; posicaoVetor < 6; posicaoVetor++) { // atribui 0 para os valores de todas as posições do vetor
-        vetorTempo2[posicaoVetor] = 0;
+      for (vector_position = 0; vector_position < 6; vector_position++) { 
+        time_vector2[vector_position] = 0;
       }
 
-      for (posicaoVetor = 0; posicaoVetor < 7; posicaoVetor++)  {  //roda 5 ciclos para inserir valor e 1 para confirmar
-
-        configuraTempo();
+      // insert 6 values for the first timer, and in the last run expect a "confirm" button
+      for (vector_position = 0; vector_position < 7; vector_position++)  { 
+        
+        setTime(); // make all values from time equal 0, because the auxiliar vector has 0 in all positions 
         lcd.print(" Insira o tempo");
-        mostraTempo();
+        showTime();
 
-        // indica com um "_" onde o usuario está escrevendo no LCD
+        // indicates with "_" where the user is writing on LCD
 
-        if (posicaoVetor < 2) {
-          lcd.setCursor (posicaoVetor + 4, 1);
+        if (vector_position < 2) {
+          lcd.setCursor (vector_position + 4, 1);
           lcd.print("_");
         }
-        if ((posicaoVetor > 1) && (posicaoVetor < 4)) {
-          lcd.setCursor (posicaoVetor + 5, 1);
+        if ((vector_position > 1) && (vector_position < 4)) {
+          lcd.setCursor (vector_position + 5, 1);
           lcd.print("_");
         }
-        if ((posicaoVetor > 3) && (posicaoVetor < 6)) {
-          lcd.setCursor (posicaoVetor + 6, 1);
+        if ((vector_position > 3) && (vector_position < 6)) {
+          lcd.setCursor (vector_position + 6, 1);
           lcd.print("_");
         }
 
-        if (posicaoVetor == 6) { // verifica é o ultimo ciclo do for
-          configuraTempo();
-          lcd.print(" C-conf / A-apag"); // deixa confirmar ou ainda apagar o tempo anterior
-          mostraTempo();
-          aux = numeros.waitForKey();
+        if (vector_position == 6) { // verify if is the last run of for loop
+          setTime(); // set the values for timer 1
+          // NOTE: IN HARDWARE, C AND A BUTTON ARE DIFFERENT THAN THE CODE
+          // PHYSIC 'A' CORRESPOND TO VIRTUAL C, AND VICE-VERSA 
+          lcd.print(" C-conf / A-apag"); 
+          showTime();
+          // wait for a confirm button 'c' or a erase button 'a'
+          aux = numbersKeypad.waitForKey();
 
-          if (aux == 'a') { // se confirmar, sai do for e inicia processo
-            posicaoVetor = 8;
-            processo = true;
+          if (aux == 'a') { // if confirm, exit for and start the process
+            vector_position = 8;
+            process_started = true;
           }
-          else if (aux == 'c') { // se apagar, volta para a posição anterior do vetor
-            vetorTempo[ultPosEscrita] = 0;
-            posicaoVetor = ultPosEscrita - 1;
-            ultPosEscrita = ultPosEscrita - 1;
+          else if (aux == 'c') { // if erase, go back in one position to rewrite the number
+            time_vector[lastWritenPosition] = 0;
+            vector_position = lastWritenPosition - 1;
+            lastWritenPosition = lastWritenPosition - 1;
           }
-          else { // se digitar outra coisa, indica erro
+          else { // if other, show an error message and wait a new button press
             lcd.clear();
             lcd.setCursor(0, 0);
             lcd.print("digite novamente");
-            posicaoVetor = posicaoVetor - 1;
+            vector_position = vector_position - 1;
             delay(700);
           }
         }
 
-        else { // se não está na etapa de confirma, então está digitando os números para o tempo
-          aux = numeros.waitForKey(); // espera o botao ser digitado
-          if ((aux - '0' > -1) && (aux - '0' < 10)) { // verifica se foi digitado um numero
-            vetorTempo[posicaoVetor] = aux - '0'; // o vetor tempo na posição atual do ciclo do for recebe o valor de aux e converte para inteiro com " - '0' ", segundo a tabela ascii
-            ultPosEscrita = posicaoVetor; // ultima posição escrita agora é a posição do vetor
+        // if it aint the last for run, waits numbers to the timer 1
+        else {
+          aux = numbersKeypad.waitForKey(); 
+          if ((aux - '0' > -1) && (aux - '0' < 10)) { // verify if its a valid number
+            time_vector[vector_position] = aux - '0'; // save in auxiliar vector its number
+            lastWritenPosition = vector_position; // and set the lastWritenposition
           }
 
-          else if (aux == 'c') {  // apaga numero digitado anteriormente
-            if (posicaoVetor < 1) {
-              posicaoVetor = posicaoVetor - 1;
+          else if (aux == 'c') {  // if the button pressed is 'c', it erase the last number Writen
+            if (vector_position < 1) {
+              vector_position = vector_position - 1;
             }
-            else if (posicaoVetor > 0) {
-              vetorTempo[ultPosEscrita] = 0; // vetor na ultima posição escrita vai ter seu valor igual a 0
-              posicaoVetor = ultPosEscrita - 1; // posição vetor vai decrementar em 2
-              ultPosEscrita = ultPosEscrita - 1; // ultima posicção escrita vai decrementar em 1
+            else if (vector_position > 0) {
+              // erase the last Writen number
+              // and go back in one position in the vector 
+              time_vector[lastWritenPosition] = 0; 
+              vector_position = lastWritenPosition - 1;
+              lastWritenPosition = lastWritenPosition - 1;
             }
-            // ultima posição escrita sempre vale 1 a menos que a atual posição do vetor
+            // lastWritenposition is always vector_position - 1
           }
 
-          else if (aux == 'a') { // se confirmar, igual a posição do vetor em 5, para no final do ciclo do for somar mais 1 e perguntar se quer confirmar
-            if (posicaoVetor < 1) { // se ainda estiver no primeiro ciclo do for não deixa dar esse "salto"
-              posicaoVetor = posicaoVetor - 1;
+          // if the button pressed is 'a', it confirms the actual vector value, and skip the next inputs configuration 
+          else if (aux == 'a') { 
+            if (vector_position < 1) { // but only is valid if you write at least one number
+              vector_position = vector_position - 1;
             }
             else {
-              posicaoVetor = 5;
+              vector_position = 5;
             }
           }
-          else {  // qualquer outra coisa digitada é entendida como 'erro'
+          else {  // if you type anything else, an error message is shown 
             lcd.clear();
             lcd.setCursor(0, 0);
             lcd.print("digite novamente");
             delay(700);
-            posicaoVetor = posicaoVetor - 1;
+            vector_position = vector_position - 1;
           }
-          //funções para reescrever no lcd os valores atuais;
-          configuraTempo();
-          mostraTempo();
+          // then we show on the lcd the values seted
+          setTime();
+          showTime();
         }
       }
 
-      for (posicaoVetor = 0; posicaoVetor < 7; posicaoVetor++) {  //roda 5 ciclos para inserir valor e 1 para confirmar
-        configuraTempo2();
+
+      // reapeat the same, but for timer 2
+      // insert 6 values for the second timer, and in the last run expect a "confirm" button
+      for (vector_position = 0; vector_position < 7; vector_position++) { 
+        
+        // make all values from time2 equal 0, because the auxiliar vector2 has 0 in all positions
+        setTime2();
         lcd.print("Insira o tempo2");
-        mostraTempo2();
+        showTime2();
 
-        // indica com um "_" onde o usuario está escrevendo no LCD
+        // indicates with "_" where the user is writing on LCD
 
-        if (posicaoVetor < 2) {
-          lcd.setCursor (posicaoVetor + 4, 1);
+        if (vector_position < 2) {
+          lcd.setCursor (vector_position + 4, 1);
           lcd.print("_");
         }
-        if ((posicaoVetor > 1) && (posicaoVetor < 4)) {
-          lcd.setCursor (posicaoVetor + 5, 1);
+        if ((vector_position > 1) && (vector_position < 4)) {
+          lcd.setCursor (vector_position + 5, 1);
           lcd.print("_");
         }
-        if ((posicaoVetor > 3) && (posicaoVetor < 6)) {
-          lcd.setCursor (posicaoVetor + 6, 1);
+        if ((vector_position > 3) && (vector_position < 6)) {
+          lcd.setCursor (vector_position + 6, 1);
           lcd.print("_");
         }
 
-        if (posicaoVetor == 6) { // verifica é o ultimo ciclo do for
-          configuraTempo2();
-          lcd.print(" C-conf / A-apag"); // deixa confirmar ou ainda apagar o tempo anterior
-          mostraTempo2();
-          aux = numeros.waitForKey(); // espera o botao ser digitado
+        if (vector_position == 6) { // verify if is the last run of for loop
+          setTime2(); // set the values for timer 2
+          // NOTE: IN HARDWARE, C AND A BUTTON ARE DIFFERENT THAN THE CODE
+          // PHYSIC 'A' CORRESPOND TO VIRTUAL C, AND VICE-VERSA 
+          lcd.print(" C-conf / A-apag"); 
+          showTime2();
+          // wait for a confirm button 'c' or a erase button 'a'
+          aux = numbersKeypad.waitForKey(); 
 
-          if (aux == 'a') { // se confirmar, sai do for e inicia processo
-            posicaoVetor = 8;
-            processo = true;
-            digitei = true;
+          if (aux == 'a') { // if confirm, exit for and start the process
+            vector_position = 8;
+            process_started = true;
+            started = true;
           }
-          else if (aux == 'c') { // se apagar, volta para a posição anterior do vetor
-            vetorTempo2[ultPosEscrita] = 0;
-            posicaoVetor = ultPosEscrita - 1;
-            ultPosEscrita = ultPosEscrita - 1;
+          else if (aux == 'c') { // if erase, go back in one position to rewrite the number
+            time_vector2[lastWritenPosition] = 0;
+            vector_position = lastWritenPosition - 1;
+            lastWritenPosition = lastWritenPosition - 1;
           }
-          else { // se digitar outra coisa, indica erro
+          else { // if other, show an error message and wait a new button press
             lcd.clear();
             lcd.setCursor(0, 0);
             lcd.print("digite novamente");
-            posicaoVetor = posicaoVetor - 1;
+            vector_position = vector_position - 1;
             delay(700);
           }
         }
-
-        else { // se não está na etapa de confirma, então está digitando os números para o tempo
-          aux = numeros.waitForKey(); // espera o botao ser digitado
-          if ((aux - '0' > -1) && (aux - '0' < 10)) { // verifica se foi digitado um numero
-            vetorTempo2[posicaoVetor] = aux - '0'; // o vetor tempo na posição atual do ciclo do for recebe o valor de aux e converte para inteiro com " - '0' ", segundo a tabela ascii
-            ultPosEscrita = posicaoVetor; // ultima posição escrita agora é a posição do vetor
+        
+        // if it aint the last for run, waits numbers to the timer 1
+        else { 
+          aux = numbersKeypad.waitForKey();
+          if ((aux - '0' > -1) && (aux - '0' < 10)) { // verify if its a valid number
+            time_vector2[vector_position] = aux - '0'; // save in auxiliar vector its number
+            lastWritenPosition = vector_position; // and set the lastWritenposition
           }
 
-          else if (aux == 'c') {  // apaga numero digitado anteriormente
-            if (posicaoVetor < 1) {
-              posicaoVetor = posicaoVetor - 1;
+          else if (aux == 'c') {  // if the button pressed is 'c', it erase the last number Writen
+            if (vector_position < 1) {
+              vector_position = vector_position - 1;
             }
-            else if (posicaoVetor > 0) {
-              vetorTempo2[ultPosEscrita] = 0; // vetor na ultima posição escrita vai ter seu valor igual a 0
-              posicaoVetor = ultPosEscrita - 1; // posição vetor vai decrementar em 2
-              ultPosEscrita = ultPosEscrita - 1; // ultima posicção escrita vai decrementar em 1
+            else if (vector_position > 0) {
+              // erase the last Writen number
+              // and go back in one position in the vector 
+              time_vector2[lastWritenPosition] = 0; 
+              vector_position = lastWritenPosition - 1;
+              lastWritenPosition = lastWritenPosition - 1;
             }
-            // ultima posição escrita sempre vale 1 a menos que a atual posição do vetor
+            // lastWritenposition is always vector_position - 1
           }
-
-          else if (aux == 'a') { // se confirmar, igual a posição do vetor em 5, para no final do ciclo do for somar mais 1 e perguntar se quer confirmar
-            if (posicaoVetor < 1) { // se ainda estiver no primeiro ciclo do for não deixa dar esse "salto"
-              posicaoVetor = posicaoVetor - 1;
+          
+          // if the button pressed is 'a', it confirms the actual vector value, and skip the next inputs configuration 
+          else if (aux == 'a') { 
+            if (vector_position < 1) { // but only is valid if you write at least one number
+              vector_position = vector_position - 1;
             }
             else {
-              posicaoVetor = 5;
+              vector_position = 5;
             }
           }
-          else {  // qualquer outra coisa digitada é entendida como 'erro'
+          else {  // if you type anything else, an error message is shown
             lcd.clear();
             lcd.setCursor(0, 0);
             lcd.print("digite novamente");
             delay(700);
-            posicaoVetor = posicaoVetor - 1;
+            vector_position = vector_position - 1;
           }
-          //funções para reescrever no lcd os valores atuais;
-          configuraTempo2();
-          mostraTempo2();
+          // then we show on the lcd the values seted
+          setTime2();
+          showTime2();
         }
       }
     }
-    // indica que os processos que foram iniciados ainda não acabaram
-    agitou1 = false;
-    agitou2 = false;
+    // indicates that the started processes still running
+    stirred1 = false;
+    stirred2 = false;
 
-    // faz um inicio suave dos motores
+    // this is a simple try to soft start to the DC motors
     lcd.clear();
     lcd.setCursor(0, 0);
     lcd.print("Espere um pouco");
@@ -403,137 +449,140 @@ void loop() {
     softstart = 0;
     while ((softstart < analogRead(potag1) / 4) or (softstart < analogRead(potag2) / 4)) {
       if (softstart < analogRead(potag1) / 4) {
-        analogWrite (agitador, softstart);
+        analogWrite (stirrer, softstart);
       }
       if (softstart < analogRead(potag2) / 4) {
-        analogWrite (agitador2, softstart);
+        analogWrite (stirrer2, softstart);
       }
       softstart = softstart + 10;
       delay(500);
     }
     digitalWrite(led2, LOW);
-    analogWrite (agitador, analogRead(potag1) / 4);
-    analogWrite (agitador2, analogRead(potag2) / 4);
+    analogWrite (stirrer, analogRead(potag1) / 4);
+    analogWrite (stirrer2, analogRead(potag2) / 4);
 
-    while (processo) { // inicia o loop principal
+    while (process_started) { // here is the main loop
       digitalWrite(led3, HIGH);
-      if (agitou1 == false) { //verifica se a primeira agitação não acabou ainda
-        analogWrite (agitador, analogRead(potag1) / 4); //escreve analogicamente uma tensão para o motor, baseado na leitura do potenciometro
+      // if a process is running, we can change the dc motor velocity in real time (1s delay)
+      if (stirred1 == false) { 
+        analogWrite (stirrer, analogRead(potag1) / 4); 
       }
 
-      if (agitou2 == false) { //verifica se a segunda agitação não acabou ainda
-        analogWrite (agitador2, analogRead(potag2) / 4); //escreve analogicamente uma tensão para o motor, baseado na leitura do potenciometro
+      if (stirred2 == false) { 
+        analogWrite (stirrer2, analogRead(potag2) / 4);
       }
 
-      aux = numeros.getKey();  // verifica se um botão do teclado foi pressionado entre as atualizações periódicas de 1 em 1 segundo;
-      if (aux == 'd') { // se D for pressionado, cancela o processo
-        processo = false;
-        agitou1 = true;
-        agitou2 = true;
+      aux = numbersKeypad.getKey();  
+      // if we press 'd' button, we stop both processes
+      if (aux == 'd') { 
+        process_started = false;
+        stirred1 = true;
+        stirred2 = true;
       }
 
-      tempo_at = millis() - tempo_ant; //define o tempo atual como sendo a contagem da função millis menos o tempo anterior
+      // simple time counting  
+      tempo_at = millis() - tempo_ant;
 
-      //quando se passa 1 segundo entre o tempo anterior e o atual, entramos na etapa de atualizar o LCD
+      // when passes 1 second, we atualize the LCD
       if (tempo_at >= 1000) {
 
         lcd.clear();
         lcd.setCursor(4, 0);
-        if (horasp > 99) {
+        if (hoursp > 99) {
           lcd.setCursor(3, 0);
         }
-        if (horasp < 10) {
+        if (hoursp < 10) {
           lcd.print("0");
         }
-        lcd.print(horasp);
+        lcd.print(hoursp);
         lcd.print("h");
-        if (minutosp < 10) {
+        if (minutesp < 10) {
           lcd.print("0");
         }
-        lcd.print(minutosp);
+        lcd.print(minutesp);
         lcd.print("m");
-        if (segundosp < 10) {
+        if (secondsp < 10) {
           lcd.print("0");
         }
-        lcd.print(segundosp);
+        lcd.print(secondsp);
         lcd.print("s");
 
 
         lcd.setCursor(4, 1);
-        if (horasp2 > 99) {
+        if (hoursp2 > 99) {
           lcd.setCursor(3, 1);
         }
-        if (horasp2 < 10) {
+        if (hoursp2 < 10) {
           lcd.print("0");
         }
-        lcd.print(horasp2);
+        lcd.print(hoursp2);
         lcd.print("h");
-        if (minutosp2 < 10) {
+        if (minutesp2 < 10) {
           lcd.print("0");
         }
-        lcd.print(minutosp2);
+        lcd.print(minutesp2);
         lcd.print("m");
-        if (segundosp2 < 10) {
+        if (secondsp2 < 10) {
           lcd.print("0");
         }
-        lcd.print(segundosp2);
+        lcd.print(secondsp2);
         lcd.print("s");
 
-        if ((minutosp > 58) && (segundosp > 59)) { //verifica se os minutos são 60 para o primeiro tempo
-          horasp = horasp + 1;
-          minutosp = 0;
-          segundosp = 0;
+        if ((minutesp > 58) && (secondsp > 59)) { 
+          hoursp = hoursp + 1;
+          minutesp = 0;
+          secondsp = 0;
         }
-        if ((minutosp < 59) && (segundosp > 59)) { //verifica se os segundos são 60 para o primeiro tempo
-          minutosp = minutosp + 1;
-          segundosp = 0;
-        }
-
-        if ((minutosp2 > 58) && (segundosp2 > 59)) { //verifica se os minutos são 60 para o segundo tempo
-          horasp2 = horasp2 + 1;
-          minutosp2 = 0;
-          segundosp2 = 0;
-        }
-        if ((minutosp2 < 59) && (segundosp2 > 59)) { //verifica se os segundos são 60 para o segundo tempo
-          minutosp2 = minutosp2 + 1;
-          segundosp2 = 0;
+        if ((minutesp < 59) && (secondsp > 59)) { 
+          minutesp = minutesp + 1;
+          secondsp = 0;
         }
 
-        //verifica se o tempo que o programa conta é maior que o tempo que o usuário escolheu para o primeiro
-        if ((horasp == horas) && (minutosp == minutos) && (segundosp == segundos)) {
-          agitou1 = true;
-          analogWrite (agitador, 0);
+        if ((minutesp2 > 58) && (secondsp2 > 59)) { 
+          hoursp2 = hoursp2 + 1;
+          minutesp2 = 0;
+          secondsp2 = 0;
+        }
+        if ((minutesp2 < 59) && (secondsp2 > 59)) { 
+          minutesp2 = minutesp2 + 1;
+          secondsp2 = 0;
+        }
+
+        // verify if its time to stop for both counters, comparing the program time with user time
+        if ((hoursp == hours) && (minutesp == minutes) && (secondsp == seconds)) {
+          stirred1 = true;
+          analogWrite (stirrer, 0);
           lcd.setCursor(0, 0);
           lcd.print ("processo acabado");
         }
         else {
-          segundosp = segundosp + 1; // se nao atingiu o limite, soma mais 1 segundo
+          secondsp = secondsp + 1; 
         }
 
-        //verifica se o tempo que o programa conta é maior que o tempo que o usuário escolheu para o segundo
-        if ((horasp2 == horas2) && (minutosp2 == minutos2) && (segundosp2 == segundos2)) {
-          agitou2 = true;
-          analogWrite (agitador2, 0);
+        if ((hoursp2 == hours2) && (minutesp2 == minutes2) && (secondsp2 == seconds2)) {
+          stirred2 = true;
+          analogWrite (stirrer2, 0);
           lcd.setCursor(0, 1);
           lcd.print ("processo acabado");
         }
-        else { // se nao atingiu o limite, soma mais 1 segundo
-          segundosp2 = segundosp2 + 1;
+        else { 
+          secondsp2 = secondsp2 + 1;
         }
-
-        if ((agitou1) && (agitou2)) { // se as duas agitações acabaram, finalizar o processo 'geral'
-          processo = false;
+        // wait both timers stop to proceed 
+        if ((stirred1) && (stirred2)) { 
+          process_started = false;
         }
-        tempo_ant = millis(); //define o tempo anterior como sendo o ultimo milisegundo que executou uma ação na atualização pontual de 1s em 1s
+        tempo_ant = millis(); 
       }
     }
-    //verifica se o motivo do processo parar foi o botao D ou o tempo acabar
-    if (aux == 'd') { // caso o processo parou forçadamente
+    
+    //verify if the stop reason was the 'd' button pressed or the time reached
+    if (aux == 'd') { 
       digitalWrite (led1, HIGH);
       digitalWrite (led2, HIGH);
       digitalWrite (led3, HIGH);
       lcd.clear();
-      digitalWrite (ledProcesso, LOW);
+      digitalWrite (ledProcess, LOW);
       lcd.print("Desligando");
       delay(100);
       digitalWrite (led1, LOW);
@@ -570,12 +619,12 @@ void loop() {
       digitalWrite (led2, LOW);
       digitalWrite (led3, LOW);
     }
-    else { // caso o tempo acabe
+    else { 
       delay (500);
       lcd.clear();
       lcd.setCursor(0, 0);
       digitalWrite (led3, LOW);
-      digitalWrite (ledProcesso, HIGH);
+      digitalWrite (ledProcess, HIGH);
       lcd.print("acabou agitacao");
       int buzzer = 11;
       delay (300);
@@ -591,23 +640,23 @@ void loop() {
       delay(500);
     }
 
-    // reset em todos os valores
+    // reset all values
 
-    segundos = 0;
-    minutos = 0;
-    horas = 0;
-    segundosp = 0;
-    minutosp = 0;
-    horasp = 0;
+    seconds = 0;
+    minutes = 0;
+    hours = 0;
+    secondsp = 0;
+    minutesp = 0;
+    hoursp = 0;
 
-    segundos2 = 0;
-    minutos2 = 0;
-    horas2 = 0;
-    segundosp2 = 0;
-    minutosp2 = 0;
-    horasp2 = 0;
+    seconds2 = 0;
+    minutes2 = 0;
+    hours2 = 0;
+    secondsp2 = 0;
+    minutesp2 = 0;
+    hoursp2 = 0;
 
-    analogWrite (agitador, 0);
-    analogWrite (agitador2, 0);
+    analogWrite (stirrer, 0);
+    analogWrite (stirrer2, 0);
   }
 }
