@@ -9,6 +9,14 @@
 - It is a simple project but it is useful, you can build one to use on chemestry laboratories
 - Unfortunately the wiring is not available, but the specifications are on the code, it is a simple circuit
 
+## Overview
+It is a simple project made to integrate knowledge of electronics and chemestry.
+It is open source and simple to reproduce.
+A magnetic stirrer is a tool used on chemestry labs that stirres some substances and this process can take a long time
+with this project you can set the time you want for stirrings.
+Some magnectic stirrers has a heating too, if you want you can improve this project to do this.
+Another improvement you can do is to detect when the magnectic needle leaves its axis with magnetic sensors (hall efect).
+
 ## Hardware
 - The uC is the atmega2560 on arduino mega board
 - The keyboard is a simple matrix keypad
@@ -22,11 +30,3 @@
 - The third led indicates that the processes started
 - The fourth led indicates that the processes finished (not forced to stop)
 - If the system is stopped by pressing 'd', the 3 first leds blinks
-
-## Overview
-It is a simple project made to integrate knowledge of electronics and chemestry
-It is open source and simple to reproduce
-A magnetic stirrer is a tool used on chemestry labs that stirres some substances and this process can take a long time
-with this project you can set the time you want for stirrings
-Some magnectic stirrers has a heating too, if you want you can improve this project to do this
-Another improvement you can do is to detect when the magnectic needle leaves its axis with magnetic sensors (hall efect)
